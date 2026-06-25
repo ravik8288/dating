@@ -1,6 +1,4 @@
 // ads.js
-// Preserves and integrates the Google AdSense code structure from the G:\Clone quiz project.
-
 window.adsbygoogle = window.adsbygoogle || [];
 
 const AdManager = {
@@ -56,13 +54,11 @@ const AdManager = {
     }
   },
 
-  // Backward compatibility with layout-loader in index and question pages
   loadBanner(divId, adUnitPath, sizes) {
     console.log('[AdManager] loadBanner mapping to AdSense slot:', divId);
     this.display("banner", divId);
   },
 
-  // Mock functions for compatibility with layout rewards
   showRewarded(callback) {
     console.log('[AdManager] showRewarded mock fired');
     if (callback) callback();
@@ -71,6 +67,43 @@ const AdManager = {
   showInterstitial(callback) {
     console.log('[AdManager] showInterstitial mock fired');
     if (callback) callback();
+  }
+};
+
+window.AdManager = AdManager;
+
+// Define the exact TWITQUIZ_ADS and QUIZ_CONFIG structures from Clone quiz for identical script compatibility
+window.TWITQUIZ_ADS = {
+  createAdManager(adsConfig) {
+    return {
+      display(position, elementId) {
+        // Map positions to slotNames
+        let slotName = "banner";
+        if (position === "middle" || position === "secondary") {
+          slotName = "middle";
+        } else if (position === "interstitial") {
+          slotName = "interstitial";
+        } else if (position === "rewarded") {
+          slotName = "rewarded";
+        }
+        AdManager.display(slotName, elementId);
+      },
+      showRewarded() {
+        return new Promise((resolve) => {
+          AdManager.showRewarded(() => resolve(true));
+        });
+      }
+    };
+  }
+};
+
+window.QUIZ_CONFIG = {
+  ads: {
+    provider: "demo",
+    top: "",
+    middle: "",
+    interstitial: "",
+    rewarded: ""
   }
 };
 

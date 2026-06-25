@@ -46,19 +46,21 @@ body{
     display:flex;
 
     justify-content:center;
-  background-image:url(https://game05.mglgamez.co/assets/images/full-bg.webp);
+  background-image:url(assets/images/full-bg.webp);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .app-wrap{
 
     width:100%;
     max-width:360px;
-    min-height:100vh;
+    height:100vh;
     padding:10px 15px;
-    background:url(https://game05.mglgamez.co/assets/images/bg.webp);
+    background:url(assets/images/bg.webp);
 background-size: cover;
     background-position:right top;
     background-repeat:no-repeat;
@@ -2411,32 +2413,177 @@ max-width: 100%;
   text-align: center;
 }
 
+.margin-top-20px {
+  margin-top: 20px !important;
+}
+
 .ads {
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, .05);
 }
 
+.custom-gpt-ad {
+  display: flex;
+  height: 92px;
+  max-height: 92px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.custom-gpt-ad ins {
+  width: 100%;
+  height: 90px !important;
+  max-height: 90px !important;
+  overflow: hidden;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.ad-placeholder {
+  display: flex;
+  width: min(100%, 336px);
+  min-height: 90px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #64748b;
+  background: #0a101a;
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
 .ads-label {
   margin: 5px 0 10px;
-  color: #f0e7e7;
+  color: #64748b;
   text-align: center;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+/* Interstitial Popup Ads CSS (from G:\Clone quiz) */
+.ads-popup-overlay {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  background: rgba(3, 6, 12, .82);
+  backdrop-filter: blur(10px);
+}
+
+.ads-popup-overlay[hidden] {
+  display: none !important;
+}
+
+.ads-popup {
+  position: relative;
+  width: min(100%, 450px);
+  min-height: 370px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 25px 20px;
+  color: #e2e8f0;
+  background: #111827;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+}
+
+.close-wrap {
+  min-height: 36px;
+  margin-bottom: 8px;
+}
+
+.ads-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  display: block;
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: #fff;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+.ads-close-btn:disabled {
+  display: none;
+}
+
+.ads-loading {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+.interstitial-ad {
+  min-height: 280px;
+}
+
+.interstitial-ad .ad-placeholder {
+  min-height: 280px;
+  color: #64748b;
+  background: #1f2937;
+}
+
+.popup-ad-label {
+  margin-top: 5px;
+  color: #9ca3af;
   font-size: 12px;
   text-transform: uppercase;
 }
 
 /* Ad badge on buttons (absolute top-right) */
 .button-ad-badge {
-    position: absolute;
-    top: 6px;
-    right: 20px;
-    font-size: 8px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: white;
-    padding: 2px 5px;
-    border-radius: 4px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1;
+  position: absolute;
+  top: 6px;
+  right: 20px;
+  font-size: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.claim-button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: buttonSpin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.appbutton.loading {
+  pointer-events: none;
+  opacity: 0.8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes buttonSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }

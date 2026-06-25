@@ -49,106 +49,191 @@ const AdSound = {
 };
 
 // --------------------------------------------------------------------------
-// 2. HTML5 Interstitial Ad Player Controller
+// 2. Google H5 Games Ads API & Button Loading Controller
 // --------------------------------------------------------------------------
-const HTML5AdPlayer = {
-    overlay: null,
-    closeBtn: null,
-    targetUrl: '',
 
-    injectOverlay() {
-        const overlayMarkup = `
-          <div class="ads-popup" role="dialog" aria-modal="true" aria-label="Advertisement">
-            <div class="close-wrap">
-              <button class="ads-close-btn" id="ad-close-btn" type="button" aria-label="Close Ad">
-                ✖
-              </button>
-            </div>
-            <div id="ad-interstitial" class="custom-gpt-ad interstitial-ad">
-              <!-- Loaded by AdManager -->
-            </div>
-            <div class="popup-ad-label">Advertisement</div>
-          </div>
-        `;
-        
-        const overlayDiv = document.createElement('div');
-        overlayDiv.id = 'html5-ad-overlay';
-        overlayDiv.className = 'ads-popup-overlay';
-        overlayDiv.style.display = 'none';
-        overlayDiv.innerHTML = overlayMarkup;
-        document.body.appendChild(overlayDiv);
-    },
-
-    init() {
-        this.injectOverlay();
-
-        this.overlay = document.getElementById('html5-ad-overlay');
-        this.closeBtn = document.getElementById('ad-close-btn');
-
-        // Close button click
-        this.closeBtn.addEventListener('click', () => {
-            this.hide();
-            if (this.targetUrl) {
-                window.location.href = this.targetUrl;
-            }
-        });
-    },
-
-    show(targetUrl) {
-        this.targetUrl = targetUrl;
-        this.overlay.style.display = 'flex';
-
-        // Dynamically load Google AdSense inside the overlay
-        if (typeof AdManager !== 'undefined' && typeof AdManager.display === 'function') {
-            AdManager.display("interstitial", "ad-interstitial");
-        }
-    },
-
-    hide() {
-        this.overlay.style.display = 'none';
-        
-        // Clear the inside of the interstitial slot so it re-renders next time
-        const slotEl = document.getElementById("ad-interstitial");
-        if (slotEl) {
-            slotEl.innerHTML = '';
-        }
-    }
-};
-
-// --------------------------------------------------------------------------
-// 3. Document Load and Click Listeners
-// --------------------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-    // Inject and initialize ad player
-    HTML5AdPlayer.init();
-
-    // Dynamically load the page banner via original AdManager if it's setup
-    const bannerSlot = document.querySelector('.gpt-banner-slot[id]');
-    if (
-        bannerSlot &&
-        typeof AdManager !== 'undefined' &&
-        typeof AdManager.loadBanner === 'function'
-    ) {
-        AdManager.loadBanner(
-            bannerSlot.id,
-            bannerSlot.dataset.adUnitPath,
-            bannerSlot.dataset.adSizes ? JSON.parse(bannerSlot.dataset.adSizes) : [[300, 250], [300, 100], [320, 250], [320, 100], [300, 50], [336, 280], [320, 50]]
-        );
-    }
-
-    // Intercept clicks only on the main welcome/intro continue button
-    document.addEventListener('click', (event) => {
-        const targetLink = event.target.closest('#continue-btn');
-
-        if (targetLink) {
-            const href = targetLink.getAttribute('href');
-            if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
-                event.preventDefault();
-                console.log('[Click Handler] Intercepting continue button for HTML5 Ad:', href);
-                HTML5AdPlayer.show(href);
-            }
+// Initialize H5 Games Ads configuration if available
+if (typeof adConfig === 'function') {
+    adConfig({
+        preloadAdBreaks: 'on',
+        sound: 'on',
+        onReady: function () {
+            console.log('H5 Games Ads initialized and ready');
         }
     });
+}
+
+function handleContinueClick(event) {
+    const btn = event.currentTarget;
+    if (btn.classList.contains('loading')) return;
+
+    event.preventDefault();
+    const targetUrl = 'question-1.html'; // Age check continue target page
+
+    const btnText = btn.querySelector('.btn-text');
+
+    // Show button loading spinner (matching G:\Clone quiz result.js logic)
+    btn.disabled = true;
+    btn.classList.add('loading');
+    if (btnText) {
+        btnText.innerHTML = `<span class="claim-button-spinner"></span>Loading...`;
+    }
+
+    AdSound.playHeartPop();
+
+    // 1.5s buffer for ad to preload
+    setTimeout(() => {
+        if (typeof adBreak !== 'function') {
+            console.error('adBreak not available - redirecting immediately');
+            window.location.href = targetUrl;
+            return;
+        }
+
+        let adShown = false;
+        let callbackFired = false;
+
+        function proceedToNextPage() {
+            window.location.href = targetUrl;
+        }
+
+        adBreak({
+            type: 'reward', // Cloned from result.js reward flow
+            name: 'continue_to_quiz',
+            beforeReward: function (showAdFn) {
+                console.log('Ad ready, showing now...');
+                adShown = true;
+                showAdFn();
+            },
+            adViewed: function () {
+                callbackFired = true;
+                console.log('Ad viewed successfully');
+                proceedToNextPage();
+            },
+            adDismissed: function () {
+                callbackFired = true;
+                console.log('Ad dismissed');
+                proceedToNextPage();
+            },
+            adBreakDone: function (placementInfo) {
+                console.log('adBreakDone status:', placementInfo ? placementInfo.breakStatus : 'unknown');
+                
+                // If ad was shown, proceedToNextPage will run on viewed/dismissed.
+                // If no ad was served/shown, we proceed directly.
+                if (!adShown && !callbackFired) {
+                    console.log('No ad served - proceeding directly');
+                    proceedToNextPage();
+                } else if (adShown && !callbackFired) {
+                    // Fallback to ensure redirect if ad was shown but callbacks didn't fire
+                    setTimeout(proceedToNextPage, 200);
+                }
+            }
+        });
+    }, 1500);
+}
+
+function handleOptionClick(event, element, isProfileCard = false) {
+    if (element.classList.contains('loading')) return;
+
+    event.preventDefault();
+    const targetUrl = element.getAttribute('href') || 'index.html';
+
+    // Show loading spinner
+    element.classList.add('loading');
+    
+    // Disable clicks on all options on the page to prevent double taps
+    const allOptions = document.querySelectorAll('.select-btn, .profile-card.neon-card');
+    allOptions.forEach(opt => {
+        opt.style.pointerEvents = 'none';
+        opt.style.opacity = '0.7';
+    });
+
+    // Update inner content to show spinner
+    if (isProfileCard) {
+        const statusDiv = element.querySelector('.status');
+        if (statusDiv) {
+            statusDiv.innerHTML = `<span class="claim-button-spinner" style="width: 10px; height: 10px; margin-right: 4px; border-width: 1.5px; vertical-align: middle;"></span>Loading...`;
+        }
+    } else {
+        element.innerHTML = `<span class="claim-button-spinner" style="width: 12px; height: 12px; margin-right: 6px; border-width: 1.5px; vertical-align: middle;"></span>Loading...`;
+    }
+
+    AdSound.playHeartPop();
+
+    // 1.5s buffer for ad to preload
+    setTimeout(() => {
+        if (typeof adBreak !== 'function') {
+            console.error('adBreak not available - redirecting immediately');
+            window.location.href = targetUrl;
+            return;
+        }
+
+        let adShown = false;
+        let callbackFired = false;
+
+        function proceedToNextPage() {
+            window.location.href = targetUrl;
+        }
+
+        adBreak({
+            type: 'reward', // Direct rewarded integration
+            name: 'answer_selection',
+            beforeReward: function (showAdFn) {
+                console.log('Ad ready, showing now...');
+                adShown = true;
+                showAdFn();
+            },
+            adViewed: function () {
+                callbackFired = true;
+                console.log('Ad viewed successfully');
+                proceedToNextPage();
+            },
+            adDismissed: function () {
+                callbackFired = true;
+                console.log('Ad dismissed');
+                proceedToNextPage();
+            },
+            adBreakDone: function (placementInfo) {
+                console.log('adBreakDone status:', placementInfo ? placementInfo.breakStatus : 'unknown');
+                
+                // If ad was shown, proceedToNextPage will run on viewed/dismissed.
+                // If no ad was served/shown, we proceed directly.
+                if (!adShown && !callbackFired) {
+                    console.log('No ad served - proceeding directly');
+                    proceedToNextPage();
+                } else if (adShown && !callbackFired) {
+                    // Fallback to ensure redirect if ad was shown but callbacks didn't fire
+                    setTimeout(proceedToNextPage, 200);
+                }
+            }
+        });
+    }, 1500);
+}
+
+// --------------------------------------------------------------------------
+// 3. Document Load and Event Listeners
+// --------------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    // Intercept clicks only on the main welcome/intro continue button
+    const continueBtn = document.getElementById('continue-btn');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', handleContinueClick);
+    }
+
+    // Intercept clicks on even-numbered question pages
+    const isEvenQuestionPage = /(question-2|question-4|question-6|question-8)/i.test(window.location.pathname);
+    if (isEvenQuestionPage) {
+        // For question-2, 4, 6: options are select-btn
+        const selectButtons = document.querySelectorAll('.select-btn');
+        selectButtons.forEach(btn => {
+            btn.addEventListener('click', (event) => handleOptionClick(event, btn));
+        });
+
+        // For question-8: options are profile-card neon-card
+        const profileCards = document.querySelectorAll('.profile-card.neon-card');
+        profileCards.forEach(card => {
+            card.addEventListener('click', (event) => handleOptionClick(event, card, true));
+        });
+    }
 
     // Handle auto-rewarded ads on load if configured on the Welcome screen (intro and index)
     const isWelcomeScreen = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('intro.html');
